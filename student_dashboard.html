@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="student_dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Student Dashboard</h1>
+        <div class="progress-box" id="progress">0%</div>
+        
+        <!-- Buttons for Different Forms -->
+        <div class="form-buttons">
+            <button onclick="showForm('personal')">Personal Details</button>
+            <button onclick="showForm('academics')">Academics</button>
+            <button onclick="showForm('skills')">Skills</button>
+            <button onclick="showForm('experience')">Experience</button>
+            <button onclick="showForm('family')">Family Details</button>
+            <button onclick="showForm('interests')">Interests</button>
+            <button onclick="generateResume()">Generate Resume</button>
+        </div>
+        
+        <!-- Form Container -->
+        <div id="form-container" class="form-container hidden"></div>
+        
+        <!-- Resume Preview -->
+        <div id="resume-preview" class="hidden"></div>
+        
+        <!-- Pop-up Modal for Success Messages -->
+        <div id="success-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <p id="modal-message">Data saved successfully!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const forms = ['personal', 'academics', 'skills', 'experience', 'family', 'interests'];
+        let data = {};
+        let currentForm = null;
+
+        // Load saved data on page load
+        window.onload = function() {
+            forms.forEach(form => {
+                const saved = localStorage.getItem(form);
+                if (saved) {
+                    data[form] = JSON.parse(saved);
+                }
+            });
+            updateProgress();
+        };
+
+        function showForm(formId) {
+            currentForm = formId;
+            const container = document.getElementById('form-container');
+            container.innerHTML = getFormHTML(formId);
+            container.classList.remove('hidden');
+            container.classList.add('fade-in');
+            populateForm(formId, data[formId] || {});
+        }
+
+        function getFormHTML(formId) {
+            let html = `<h2>${formId.charAt(0).toUpperCase() + formId.slice(1)}</h2><form id="${formId}-form">`;
+            switch (formId) {
+                case 'personal':
+                    html += `
+                        <label for="name">Name:</label><input type="text" id="name" name="name">
+                        <label for="email">Email:</label><input type="email" id="email" name="email">
+                        <label for="phone">Phone:</label><input type="tel" id="phone" name="phone">
+                    `;
+                    break;
+                case 'academics':
+                    html += `
+                        <label for="degree">Degree:</label><input type="text" id="degree" name="degree">
+                        <label for="gpa">GPA:</label><input type="text" id="gpa" name="gpa">
+                    `;
+                    break;
+                case 'skills':
+                    html += `
+                        <label for="skills">Skills (comma-separated):</label><textarea id="skills" name="skills"></textarea>
+                    `;
+                    break;
+                case 'experience':
+                    html += `
+                        <label for="experience">Experience Details:</label><textarea id="experience" name="experience"></textarea>
+                    `;
+                    break;
+                case 'family':
+                    html += `
+                        <label for="family">Family Background:</label><textarea id="family" name="family"></textarea>
+                    `;
+                    break;
+                case 'interests':
+                    html += `
+                        <label for="clubs">Clubs/Technologies Interested In:</label><textarea id="clubs" name="clubs"></textarea>
+                    `;
+                    break;
+            }
+            html += `<button type="button" onclick="saveForm('${formId}')">Save</button></form>`;
+            return html;
+        }
+
+        function populateForm(formId, formData) {
+            const form = document.getElementById(`${formId}-form`);
+            if (!form) return;
+            for (let key in formData) {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) input.value = formData[key];
+            }
+        }
+
+        function saveForm(formId) {
+            const form = document.getElementById(`${formId}-form`);
+            const formData = {};
+            form.querySelectorAll('input, textarea').forEach(input => {
+                formData[input.name] = input.value;
+            });
+            data[formId] = formData;
+            localStorage.setItem(formId, JSON.stringify(formData));
+            showModal('Data saved successfully!');
+            updateProgress();
+            const container = document.getElementById('form-container');
+            container.classList.add('fade-out');
+            setTimeout(() => {
+                container.classList.add('hidden');
+                container.classList.remove('fade-out');
+            }, 500);
+        }
+
+        function updateProgress() {
+            const totalForms = forms.length;
+            let filled = 0;
+            forms.forEach(form => {
+                if (localStorage.getItem(form)) filled++;
+            });
+            const percent = Math.round((filled / totalForms) * 100);
+            const progress = document.getElementById('progress');
+            progress.innerText = `${percent}%`;
+            progress.style.animation = 'pulse 1s';
+            setTimeout(() => progress.style.animation = '', 1000);
+        }
+
+        function generateResume() {
+            let resume = '<h2>College Resume</h2>';
+            if (data.personal) {
+                resume += `<p><strong>Name:</strong> ${data.personal.name}</p>`;
+                resume += `<p><strong>Email:</strong> ${data.personal.email}</p>`;
+                resume += `<p><strong>Phone:</strong> ${data.personal.phone}</p>`;
+            }
+            if (data.academics) {
+                resume += `<h3>Academics</h3><p><strong>Degree:</strong> ${data.academics.degree}</p>`;
+                resume += `<p><strong>GPA:</strong> ${data.academics.gpa}</p>`;
+            }
+            if (data.skills) {
+                resume += `<h3>Skills</h3><p>${data.skills.skills}</p>`;
+            }
+            if (data.experience) {
+                resume += `<h3>Experience</h3><p>${data.experience.experience}</p>`;
+            }
+            if (data.family) {
+                resume += `<h3>Family Background</h3><p>${data.family.family}</p>`;
+            }
+            if (data.interests) {
+                resume += `<h3>Interests</h3><p>${data.interests.clubs}</p>`;
+            }
+            const preview = document.getElementById('resume-preview');
+            preview.innerHTML = resume;
+            preview.classList.remove('hidden');
+            preview.classList.add('slide-in');
+            showModal('Resume generated!');
+        }
+
+        function showModal(message) {
+            const modal = document.getElementById('success-modal');
+            document.getElementById('modal-message').innerText = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('pop-in');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('success-modal');
+            modal.classList.add('pop-out');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('pop-out');
+            }, 300);
+        }
+    </script>
+</body>
+</html>

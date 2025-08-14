@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin_dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Admin Dashboard</h1>
+        
+        <!-- Filter by Branch -->
+        <div class="section">
+            <h2>Filter Students</h2>
+            <select id="branch-filter" onchange="filterStudents()">
+                <option value="all">All Branches</option>
+                <option value="CSE">Computer Science</option>
+                <option value="ECE">Electronics</option>
+                <option value="ME">Mechanical</option>
+            </select>
+        </div>
+        
+        <!-- Student List Table -->
+        <div class="section">
+            <h2>Student List</h2>
+            <table id="student-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Branch</th>
+                        <th>Profile Completion</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="student-table-body">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pop-up Modal for Student Details -->
+        <div id="details-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Student Details</h2>
+                <div id="student-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample student data (replace with actual backend API)
+        const students = [
+            { name: "John Doe", email: "john@example.com", branch: "CSE", completion: 80 },
+            { name: "Jane Smith", email: "jane@example.com", branch: "ECE", completion: 60 },
+            { name: "Mike Johnson", email: "mike@example.com", branch: "ME", completion: 90 }
+        ];
+
+        function populateTable(branch = 'all') {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+            students
+                .filter(student => branch === 'all' || student.branch === branch)
+                .forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${student.branch}</td>
+                        <td>${student.completion}%</td>
+                        <td><button onclick="viewDetails('${student.email}')">View Details</button></td>
+                    `;
+                    row.classList.add('table-row');
+                    tbody.appendChild(row);
+                });
+        }
+
+        function filterStudents() {
+            const branch = document.getElementById('branch-filter').value;
+            populateTable(branch);
+        }
+
+        function viewDetails(email) {
+            // Fetch student details (mock data; replace with actual API call)
+            const student = students.find(s => s.email === email);
+            const details = `
+                <p><strong>Name:</strong> ${student.name}</p>
+                <p><strong>Email:</strong> ${student.email}</p>
+                <p><strong>Branch:</strong> ${student.branch}</p>
+                <p><strong>Profile Completion:</strong> ${student.completion}%</p>
+                <p><strong>Skills:</strong> Sample skills</p>
+                <p><strong>Interests:</strong> Sample clubs/technologies</p>
+            `;
+            document.getElementById('student-details').innerHTML = details;
+            const modal = document.getElementById('details-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('pop-in');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('details-modal');
+            modal.classList.add('pop-out');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('pop-out');
+            }, 300);
+        }
+
+        // Initialize table
+        window.onload = () => populateTable();
+    </script>
+</body>
+</html>
