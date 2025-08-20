@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,19 +49,22 @@
     <div class="dashboard">
         <h1>Admin Dashboard</h1>
         
-        <!-- Filter by Branch -->
-        <div class="section">
+        <!-- Filter Section -->
+        <div class="section filter-section">
             <h2>Filter Students</h2>
-            <select id="branch-filter" onchange="filterStudents()">
-                <option value="all">All Branches</option>
-                <option value="CSE">Computer Science</option>
-                <option value="ECE">Electronics</option>
-                <option value="ME">Mechanical</option>
-            </select>
+            <div class="filter-controls">
+                <select id="branch-filter" onchange="filterStudents()">
+                    <option value="all">All Branches</option>
+                    <option value="CSE">Computer Science</option>
+                    <option value="ECE">Electronics</option>
+                    <option value="ME">Mechanical</option>
+                </select>
+                <input type="text" id="search-input" placeholder="Search by name or email..." oninput="filterStudents()">
+            </div>
         </div>
         
         <!-- Student List Table -->
-        <div class="section">
+        <div class="section table-section">
             <h2>Student List</h2>
             <table id="student-table">
                 <thead>
@@ -51,65 +93,82 @@
     </div>
 
     <script>
-        // Sample student data (replace with actual backend API)
         const students = [
-            { name: "John Doe", email: "john@example.com", branch: "CSE", completion: 80 },
-            { name: "Jane Smith", email: "jane@example.com", branch: "ECE", completion: 60 },
-            { name: "Mike Johnson", email: "mike@example.com", branch: "ME", completion: 90 }
-        ];
+    { name: "John Doe", email: "john@example.com", branch: "CSE", completion: 80, skills: "JavaScript, Python", interests: "AI Club, Hackathons" },
+    { name: "Jane Smith", email: "jane@example.com", branch: "ECE", completion: 60, skills: "Embedded Systems, C++", interests: "Robotics Club" },
+    { name: "Mike Johnson", email: "mike@example.com", branch: "ME", completion: 90, skills: "CAD, MATLAB", interests: "AutoCAD, 3D Printing" }
+];
 
-        function populateTable(branch = 'all') {
-            const tbody = document.getElementById('student-table-body');
-            tbody.innerHTML = '';
-            students
-                .filter(student => branch === 'all' || student.branch === branch)
-                .forEach(student => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${student.name}</td>
-                        <td>${student.email}</td>
-                        <td>${student.branch}</td>
-                        <td>${student.completion}%</td>
-                        <td><button onclick="viewDetails('${student.email}')">View Details</button></td>
-                    `;
-                    row.classList.add('table-row');
-                    tbody.appendChild(row);
-                });
-        }
-
-        function filterStudents() {
-            const branch = document.getElementById('branch-filter').value;
-            populateTable(branch);
-        }
-
-        function viewDetails(email) {
-            // Fetch student details (mock data; replace with actual API call)
-            const student = students.find(s => s.email === email);
-            const details = `
-                <p><strong>Name:</strong> ${student.name}</p>
-                <p><strong>Email:</strong> ${student.email}</p>
-                <p><strong>Branch:</strong> ${student.branch}</p>
-                <p><strong>Profile Completion:</strong> ${student.completion}%</p>
-                <p><strong>Skills:</strong> Sample skills</p>
-                <p><strong>Interests:</strong> Sample clubs/technologies</p>
+function populateTable(branch = 'all', search = '') {
+    const tbody = document.getElementById('student-table-body');
+    tbody.innerHTML = '';
+    students
+        .filter(student => 
+            (branch === 'all' || student.branch === branch) &&
+            (student.name.toLowerCase().includes(search.toLowerCase()) || 
+             student.email.toLowerCase().includes(search.toLowerCase()))
+        )
+        .forEach(student => {
+            const row = document.createElement('tr');
+            row.classList.add('table-row');
+            row.innerHTML = `
+                <td>${student.name}</td>
+                <td>${student.email}</td>
+                <td>${student.branch}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${student.completion}%"></div>
+                    </div>
+                    ${student.completion}%
+                </td>
+                <td><button onclick="viewDetails('${student.email}')">View Details</button></td>
             `;
-            document.getElementById('student-details').innerHTML = details;
-            const modal = document.getElementById('details-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('pop-in');
-        }
+            tbody.appendChild(row);
+        });
+}
 
-        function closeModal() {
-            const modal = document.getElementById('details-modal');
-            modal.classList.add('pop-out');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('pop-out');
-            }, 300);
-        }
+function filterStudents() {
+    const branch = document.getElementById('branch-filter').value;
+    const search = document.getElementById('search-input').value;
+    populateTable(branch, search);
+}
 
-        // Initialize table
-        window.onload = () => populateTable();
+function viewDetails(email) {
+    const student = students.find(s => s.email === email);
+    const details = `
+        <div class="detail-card">
+            <p><strong>Name:</strong> ${student.name}</p>
+            <p><strong>Email:</strong> ${student.email}</p>
+            <p><strong>Branch:</strong> ${student.branch}</p>
+            <p><strong>Profile Completion:</strong> ${student.completion}%</p>
+            <p><strong>Skills:</strong> ${student.skills}</p>
+            <p><strong>Interests:</strong> ${student.interests}</p>
+        </div>
+    `;
+    document.getElementById('student-details').innerHTML = details;
+    const modal = document.getElementById('details-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('pop-in');
+}
+
+function closeModal() {
+    const modal = document.getElementById('details-modal');
+    modal.classList.add('pop-out');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('pop-out');
+    }, 300);
+}
+
+// Handle Enter key in search input
+document.getElementById('search-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        filterStudents();
+    }
+});
+
+// Initialize table
+window.onload = () => populateTable();
     </script>
 </body>
 </html>

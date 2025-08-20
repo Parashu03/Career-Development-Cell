@@ -1,18 +1,16 @@
-from flask import Flask ,request,jsonify
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+from flask import Flask, request, jsonify
+from flask_pymongo import PyMongo
+
 
 app = Flask(__name__)
+app.config["MONGO_URI"] = "mongodb://localhost:27017/college"
+mongo = PyMongo(app).db
+
+@app.route("/")
+def hello_world():
+    mongo.student.insert_one({"a":2})
+   
+    return"<p> Hello,wolrd! </p>"
 
 
-client = MongoClient('mongodb://localhost:27017')  
-db = client['CDC']  
-collection = db['Student_details'] 
-  
-@app.route("/user/<username>")
-def user_profile(username):
-    user = db.collection.find_one_or_404({"_id": username})
-    return render_template("student_dashboard.html",user=user)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+app.run(debug=True, port=50001)
