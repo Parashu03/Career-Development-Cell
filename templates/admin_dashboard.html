@@ -55,7 +55,7 @@
           <option value="EEE">EEE</option>
           <option value="CE">Civil</option>
         </select>
-        <input type="text" id="search-input" placeholder="Search by USN..." oninput="filterStudents()">
+        <input type="text" id="search-input" placeholder="Search ..." oninput="filterStudents()">
       </div>
 
       <!-- Table Container -->
@@ -106,7 +106,8 @@ const students = [
   { usn: "CSE001", name: "Ravi Kumar", email: "ravi@example.com", branch: "CSE", completion: "80%" },
   { usn: "ECE002", name: "Anita Sharma", email: "anita@example.com", branch: "ECE", completion: "90%" },
   { usn: "AIML003", name: "Rahul Singh", email: "rahul@example.com", branch: "AIML", completion: "70%" },
-  { usn: "ME004", name: "Sneha Verma", email: "sneha@example.com", branch: "ME", completion: "85%" }
+  { usn: "ME004", name: "Sneha Verma", email: "sneha@example.com", branch: "ME", completion: "85%" },
+  { usn: "2AV23CI015", name : "Parashuram", email: "gattiparashu03@gmail.com", branch: "AIML", completion: "100%"}
 ];
 
 // Render student table with animation
@@ -140,7 +141,7 @@ function filterStudents() {
 
   const filtered = students.filter(s => {
     const branchMatch = branch === "all" || s.branch === branch;
-    const searchMatch = s.usn.toLowerCase().includes(search);
+    const searchMatch = s.usn.toLowerCase().includes(search)|| s.name.toLowerCase().includes(search)|| s.email.toLowerCase().includes(search);
     return branchMatch && searchMatch;
   });
 
