@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="admin_dashboard2.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <h1 class="logo">Career Development Cell</h1>
+    <div class="logout-container">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Sidebar Menu -->
+  <div id="menu" class="menu">
+    <ul>
+      <li onclick="showSection('student-list')">Student List</li>
+      <li onclick="showSection('analysis')">Analysis</li>
+      <li onclick="showSection('clubs')">Clubs</li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <!-- Analysis Section -->
+    <section id="analysis" class="section hidden">
+      <h2>Analysis</h2>
+      <p>Some analytics will go here.</p>
+    </section>
+
+    <!-- Student List Section -->
+    <section id="student-list" class="section">
+      <h2>Student List</h2>
+      <!-- Filter Controls -->
+      <div class="filter-controls">
+        <select id="branch-filter" onchange="filterStudents()">
+          <option value="all">All Branches</option>
+          <option value="CSE">Computer Science</option>
+          <option value="ECE">Electronics</option>
+          <option value="ME">Mechanical</option>
+          <option value="AIML">AI & ML</option>
+          <option value="CSD">CSD</option>
+          <option value="EEE">EEE</option>
+          <option value="CE">Civil</option>
+        </select>
+        <div class="search-container">
+          <input type="text" id="search-input" placeholder="Search By Name, USN, Branch..." oninput="filterStudents()">
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="table-container">
+        <table id="student-table">
+          <thead>
+            <tr>
+              <th>USN</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Profile Completion</th>
+              <th>View Profile</th>
+              <th>Resume</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody id="student-table-body">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Clubs Section -->
+    <section id="clubs" class="section hidden">
+      <h2>Clubs</h2>
+      <p>Clubs and activities info here.</p>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 -Team 4loops & AGMRCET CDC.</p>
+  </footer>
+
+  <script>
+    // Sidebar toggle
+    function toggleMenu() {
+      document.getElementById("menu").classList.toggle("active");
+    }
+
+    // Logout function
+    function logout() {
+      if (confirm("Are you sure you want to logout?")) {
+        alert("Logging out...");
+        // Redirect to login page or perform logout actions
+      }
+    }
+
+    // Show sections and close sidebar
+    function showSection(sectionId) {
+      document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+      document.getElementById(sectionId).classList.remove("hidden");
+    }
+
+    // Dummy student data
+    const students = [
+      { usn: "2AV23CS013", name: "Ravi Kumar", email: "ravi@example.com", branch: "CSE", completion: "80%" },
+      { usn: "2AV23EC001", name: "Anita Sharma", email: "anita@example.com", branch: "ECE", completion: "90%" },
+      { usn: "2AV23CI015", name: "Rahul Singh", email: "rahul@example.com", branch: "AIML", completion: "70%" },
+      { usn: "2AV23ME004", name: "Sneha Verma", email: "sneha@example.com", branch: "ME", completion: "85%" }
+    ];
+
+    // Render student table with animation
+    function renderTable(data) {
+      const tbody = document.getElementById("student-table-body");
+      tbody.innerHTML = "";
+      data.forEach((student, index) => {
+        const row = document.createElement("tr");
+        row.style.opacity = "0";
+        row.style.transition = "opacity 0.3s ease";
+        row.innerHTML = `
+          <td>${student.usn}</td>
+          <td>${student.name}</td>
+          <td>${student.email}</td>
+          <td>${student.completion}</td>
+          <td><button class="view-btn" onclick="viewProfile('${student.usn}')">View</button></td>
+          <td><button class="resume-btn" onclick="viewResume('${student.usn}')">View</button></td>
+          <td><button class="delete-btn" onclick="deleteStudent('${student.usn}')">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+        // Fade-in animation for each row
+        setTimeout(() => {
+          row.style.opacity = "1";
+        }, index * 100);
+      });
+    }
+
+    // Filter students
+    function filterStudents() {
+      const branch = document.getElementById("branch-filter").value;
+      const search = document.getElementById("search-input").value.toLowerCase();
+
+      const filtered = students.filter(s => {
+        const branchMatch = branch === "all" || s.branch === branch;
+        const searchMatch = s.usn.toLowerCase().includes(search) || s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search);
+
+        return branchMatch && searchMatch;
+      });
+
+      renderTable(filtered);
+    }
+
+    // Placeholder functions for button actions
+    function viewProfile(usn) {
+      alert(`Viewing profile for ${usn}`);
+    }
+
+    function viewResume(usn) {
+      alert(`Viewing resume for ${usn}`);
+    }
+
+    function deleteStudent(usn) {
+      if (confirm(`Are you sure you want to delete student ${usn}?`)) {
+        alert(`Student ${usn} deleted successfully.`);
+        // In a real application, you would remove the student from the data array and re-render the table
+      }
+    }
+
+    // Load students on page start
+    window.onload = () => renderTable(students);
+  </script>
+</body>
+</html>

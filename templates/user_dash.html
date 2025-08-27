@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Dashboard • Resume Builder</title>
+  <link rel="stylesheet" href="user_dash.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <button id="menuBtn" class="hamburger" aria-label="Open menu">☰</button>
+      <div class="logo">Student Dashboard</div>
+    </div>
+    <div class="nav-right">
+      <button type="submit" form="resume-form" class="btn">Save</button>
+      <button id="genBtn" class="btn">Generate Resume</button>
+      <a href="{{ url_for('logout') }}" class="btn danger" role="button">Logout</a>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="menu" aria-label="Sidebar">
+    <div class="menu-header">
+      <span>Menu</span>
+      <button id="closeMenu" class="close">&times;</button>
+    </div>
+    <ul>
+      <li><a href="#" data-target="home" class="menu-link">Home</a></li>
+      <li><a href="#" data-target="student-info" class="menu-link">Student Info</a></li>
+      <li><a href="#" data-target="analysis" class="menu-link">Analysis</a></li>
+    </ul>
+  </aside>
+  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+  <!-- Main Content -->
+  <main class="content">
+    <!-- Home -->
+    <section id="home" class="section" style="display:block;">
+      <h2>Welcome, Student 👋</h2>
+      <p class="quote">"The future belongs to those who learn more skills and combine them in creative ways."</p>
+
+      <div class="cards">
+        <article class="card" data-go="student-info">
+          <h3>Edit Profile</h3>
+          <p>Add personal, academic, projects and skills. Your resume is generated from this data.</p>
+        </article>
+        <article class="card" id="quick-generate">
+          <h3>Generate Resume</h3>
+          <p>Create a PDF-ready resume using your saved details.</p>
+        </article>
+        <article class="card" data-go="analysis">
+          <h3>Resume Analysis</h3>
+          <p>View a simple ATS-style score and suggestions.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Student Info -->
+    <section id="student-info" class="section">
+      <div class="section-head">
+        <h2>Student Info</h2>
+      </div>
+
+      <!-- Tabs as mega menu -->
+      <div class="tabs" role="tablist">
+        <button class="tab-link active" data-tab="personal" role="tab" aria-selected="true">Personal</button>
+        <button class="tab-link" data-tab="education" role="tab">Education</button>
+        <button class="tab-link" data-tab="skills" role="tab">Skills</button>
+        <button class="tab-link" data-tab="projects" role="tab">Projects</button>
+        <button class="tab-link" data-tab="achievements" role="tab">Achievements</button>
+        <button class="tab-link" data-tab="experience" role="tab">Experience</button>
+        <button class="tab-link" data-tab="certifications" role="tab">Certifications</button>
+      </div>
+
+      <!-- Profile completion tracker -->
+      <div class="profile-tracker">
+        <div class="tracker-header">
+          <label>Profile Completion</label>
+          <span id="percentage">0%</span>
+        </div>
+        <div class="profile-progress">
+          <div id="profileProgressBar" class="profile-progress-bar"></div>
+        </div>
+      </div>
+
+      <form id="resume-form" action="{{ url_for('save_profile') }}" method="POST" enctype="multipart/form-data">
+        <!-- PERSONAL -->
+        <div id="personal" class="tab-content active">
+          <div class="form-wrap">
+            <div class="field"><label>First Name<input type="text" name="first_name" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>Last Name<input type="text" name="last_name" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>Email<input type="email" name="email" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>Phone<input type="tel" name="phone" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>Location<input type="text" name="location" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>LinkedIn<input type="url" name="linkedin" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field"><label>GitHub<input type="url" name="github" oninput="checkSectionCompletion('personal')" /></label></div>
+            <div class="field full"><label>Summary<textarea name="summary" oninput="checkSectionCompletion('personal')"></textarea></label></div>
+            <div class="field"><label>Photo<input type="file" name="photo" onchange="checkSectionCompletion('personal')" /></label></div>
+          </div>
+        </div>
+
+        <!-- EDUCATION -->
+        <div id="education" class="tab-content">
+          <div class="form-wrap">
+            <div class="repeater" id="education-repeater">
+              <div class="entry">
+                <div class="field"><label>Degree<input type="text" name="education_degree[]" oninput="checkSectionCompletion('education')" /></label></div>
+                <div class="field"><label>Institution<input type="text" name="education_institution[]" oninput="checkSectionCompletion('education')" /></label></div>
+                <div class="field"><label>Year<input type="text" name="education_year[]" oninput="checkSectionCompletion('education')" /></label></div>
+                <div class="field"><label>GPA<input type="text" name="education_gpa[]" oninput="checkSectionCompletion('education')" /></label></div>
+              </div>
+              <button type="button" class="btn small add-btn" onclick="addEducation()">+ Add Education</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SKILLS -->
+        <div id="skills" class="tab-content">
+          <div class="form-wrap">
+            <div class="field full"><label>Skills (comma-separated)<input type="text" name="skills" placeholder="Python, Flask, MongoDB, DSA (Java)" oninput="checkSectionCompletion('skills')" /></label></div>
+          </div>
+        </div>
+
+        <!-- PROJECTS -->
+        <div id="projects" class="tab-content">
+          <div class="form-wrap">
+            <div class="repeater" id="projects-repeater">
+              <div class="entry">
+                <div class="field"><label>Title<input type="text" name="project_title[]" oninput="checkSectionCompletion('projects')" /></label></div>
+                <div class="field full"><label>Description<textarea name="project_desc[]" oninput="checkSectionCompletion('projects')"></textarea></label></div>
+                <div class="field"><label>Technologies<input type="text" name="project_tech[]" oninput="checkSectionCompletion('projects')" /></label></div>
+              </div>
+              <button type="button" class="btn small add-btn" onclick="addProject()">+ Add Project</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACHIEVEMENTS -->
+        <div id="achievements" class="tab-content">
+          <div class="form-wrap">
+            <div class="repeater" id="achievements-repeater">
+              <div class="entry">
+                <div class="field"><label>Title<input type="text" name="achievement_title[]" oninput="checkSectionCompletion('achievements')" /></label></div>
+                <div class="field full"><label>Description<textarea name="achievement_desc[]" oninput="checkSectionCompletion('achievements')"></textarea></label></div>
+              </div>
+              <button type="button" class="btn small add-btn" onclick="addAchievement()">+ Add Achievement</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPERIENCE -->
+        <div id="experience" class="tab-content">
+          <div class="form-wrap">
+            <div class="repeater" id="experience-repeater">
+              <div class="entry">
+                <div class="field"><label>Job Title<input type="text" name="exp_title[]" oninput="checkSectionCompletion('experience')" /></label></div>
+                <div class="field"><label>Company<input type="text" name="exp_company[]" oninput="checkSectionCompletion('experience')" /></label></div>
+                <div class="field"><label>Duration<input type="text" name="exp_duration[]" oninput="checkSectionCompletion('experience')" /></label></div>
+                <div class="field full"><label>Description<textarea name="exp_desc[]" oninput="checkSectionCompletion('experience')"></textarea></label></div>
+              </div>
+              <button type="button" class="btn small add-btn" onclick="addExperience()">+ Add Experience</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CERTIFICATIONS -->
+        <div id="certifications" class="tab-content">
+          <div class="form-wrap">
+            <div class="repeater" id="certifications-repeater">
+              <div class="entry">
+                <div class="field"><label>Name<input type="text" name="cert_name[]" oninput="checkSectionCompletion('certifications')" /></label></div>
+                <div class="field"><label>Organization<input type="text" name="cert_org[]" oninput="checkSectionCompletion('certifications')" /></label></div>
+                <div class="field"><label>Date<input type="date" name="cert_date[]" oninput="checkSectionCompletion('certifications')" /></label></div>
+              </div>
+              <button type="button" class="btn small add-btn" onclick="addCertification()">+ Add Certification</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Analysis -->
+    <section id="analysis" class="section">
+      <h2>Analysis</h2>
+      <div class="ats">
+        <div class="score" id="score">—</div>
+        <p id="advice" class="muted">Fill your profile and click "Generate Resume" to see a simple ATS-style score.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 -Team 4loops & AGMRCET CDC.</p>
+  </footer>
+
+  <!-- Minimal JS -->
+  <script>
+    // Section completion tracking
+    const sectionStatus = {
+      personal: false,
+      education: false,
+      skills: false,
+      projects: false,
+      achievements: false,
+      experience: false,
+      certifications: false
+    };
+
+    // Section requirements
+    const sectionRequirements = {
+      personal: ['first_name', 'last_name', 'email', 'phone', 'location', 'summary'],
+      education: ['education_degree[]', 'education_institution[]', 'education_year[]'],
+      skills: ['skills'],
+      projects: ['project_title[]', 'project_desc[]'],
+      achievements: ['achievement_title[]', 'achievement_desc[]'],
+      experience: ['exp_title[]', 'exp_company[]', 'exp_duration[]'],
+      certifications: ['cert_name[]', 'cert_org[]', 'cert_date[]']
+    };
+
+    // Initialize the UI
+    function initUI() {
+      // Check all sections on load
+      Object.keys(sectionStatus).forEach(section => {
+        checkSectionCompletion(section);
+      });
+    }
+
+    // Check if a section is completed
+    function checkSectionCompletion(section) {
+      const form = document.getElementById('resume-form');
+      const data = new FormData(form);
+      const requirements = sectionRequirements[section];
+      let completed = true;
+      
+      if (section === 'personal') {
+        // Check all personal fields except photo
+        for (const field of requirements) {
+          if (!data.get(field) || String(data.get(field)).trim() === '') {
+            completed = false;
+            break;
+          }
+        }
+      } else {
+        // For repeatable sections, check if at least one entry is complete
+        if (requirements.length > 0) {
+          let hasCompleteEntry = false;
+          
+          // Check each entry in the section
+          const entries = document.querySelectorAll(`#${section} .entry`);
+          for (const entry of entries) {
+            let entryComplete = true;
+            
+            for (const field of requirements) {
+              const input = entry.querySelector(`[name="${field}"]`);
+              if (!input || !input.value.trim()) {
+                entryComplete = false;
+                break;
+              }
+            }
+            
+            if (entryComplete) {
+              hasCompleteEntry = true;
+              break;
+            }
+          }
+          
+          completed = hasCompleteEntry;
+        }
+      }
+      
+      // Update section status
+      sectionStatus[section] = completed;
+      
+      // Update progress
+      updateProfileProgress();
+    }
+
+    // Update profile progress based on completed sections
+    function updateProfileProgress() {
+      const totalSections = Object.keys(sectionStatus).length;
+      const completedSections = Object.values(sectionStatus).filter(status => status).length;
+      const percentage = Math.round((completedSections / totalSections) * 100);
+      
+      // Update progress bar
+      const progressBar = document.getElementById('profileProgressBar');
+      progressBar.style.width = percentage + '%';
+      
+      // Update percentage text
+      document.getElementById('percentage').textContent = percentage + '%';
+    }
+
+    // Add education entry
+    function addEducation() {
+      const repeater = document.getElementById('education-repeater');
+      const entry = repeater.querySelector('.entry').cloneNode(true);
+      entry.querySelectorAll('input').forEach(el => {
+        el.value = '';
+        el.oninput = () => checkSectionCompletion('education');
+      });
+      repeater.insertBefore(entry, repeater.querySelector('.add-btn'));
+    }
+
+    // Add project entry
+    function addProject() {
+      const repeater = document.getElementById('projects-repeater');
+      const entry = repeater.querySelector('.entry').cloneNode(true);
+      entry.querySelectorAll('input, textarea').forEach(el => {
+        el.value = '';
+        el.oninput = () => checkSectionCompletion('projects');
+      });
+      repeater.insertBefore(entry, repeater.querySelector('.add-btn'));
+    }
+
+    // Add achievement entry
+    function addAchievement() {
+      const repeater = document.getElementById('achievements-repeater');
+      const entry = repeater.querySelector('.entry').cloneNode(true);
+      entry.querySelectorAll('input, textarea').forEach(el => {
+        el.value = '';
+        el.oninput = () => checkSectionCompletion('achievements');
+      });
+      repeater.insertBefore(entry, repeater.querySelector('.add-btn'));
+    }
+
+    // Add experience entry
+    function addExperience() {
+      const repeater = document.getElementById('experience-repeater');
+      const entry = repeater.querySelector('.entry').cloneNode(true);
+      entry.querySelectorAll('input, textarea').forEach(el => {
+        el.value = '';
+        el.oninput = () => checkSectionCompletion('experience');
+      });
+      repeater.insertBefore(entry, repeater.querySelector('.add-btn'));
+    }
+
+    // Add certification entry
+    function addCertification() {
+      const repeater = document.getElementById('certifications-repeater');
+      const entry = repeater.querySelector('.entry').cloneNode(true);
+      entry.querySelectorAll('input').forEach(el => {
+        el.value = '';
+        el.oninput = () => checkSectionCompletion('certifications');
+      });
+      repeater.insertBefore(entry, repeater.querySelector('.add-btn'));
+    }
+
+    // Sidebar functionality
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('backdrop');
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      sidebar.classList.add('active');
+      backdrop.classList.add('show');
+    });
+    document.getElementById('closeMenu').addEventListener('click', closeMenu);
+    backdrop.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+    function closeMenu() {
+      sidebar.classList.remove('active');
+      backdrop.classList.remove('show');
+    }
+
+    // Menu navigation (auto-close on click)
+    document.querySelectorAll('.menu-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigate(link.dataset.target);
+        closeMenu();
+      });
+    });
+
+    // Cards quick navigation
+    document.querySelectorAll('.card[data-go]').forEach(card => {
+      card.addEventListener('click', () => navigate(card.dataset.go));
+    });
+
+    // Section router
+    function navigate(id) {
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+      });
+    });
+
+    // Simple ATS score demo
+    document.getElementById('genBtn').addEventListener('click', () => {
+      const form = document.getElementById('resume-form');
+      const data = new FormData(form);
+      const fields = ['first_name','last_name','email','skills','project_title[]','education_degree[]'];
+      let filled = 0;
+      fields.forEach(f => {
+        if (data.get(f) && String(data.get(f)).trim() !== '') filled++;
+      });
+      const score = Math.round((filled / fields.length) * 100);
+      document.getElementById('score').textContent = isFinite(score) ? score + '/100' : '—';
+      document.getElementById('advice').textContent =
+        score >= 80 ? 'Great! Consider quantifying achievements and using impact verbs.' :
+        score >= 50 ? 'Good start. Add more projects and specific technologies.' :
+                      'Add basics: education, 2+ projects, and core skills.';
+      navigate('analysis');
+    });
+
+    // Quick generate card
+    document.getElementById('quick-generate').addEventListener('click', () => {
+      document.getElementById('genBtn').click();
+    });
+
+    // Initialize UI on load
+    window.addEventListener('DOMContentLoaded', initUI);
+    
+    // Default view
+    navigate('home');
+  </script>
+</body>
+</html>
