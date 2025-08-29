@@ -85,7 +85,7 @@
         </div>
       </div>
 
-      <form id="resume-form" action="{{ url_for('save_profile') }}" method="POST" enctype="multipart/form-data">
+      <form id="resume-form" action="{{ url_for('save_profile',usn=user['usn']) }}" method="POST" enctype="multipart/form-data">
         <!-- PERSONAL -->
         <div id="personal" class="tab-content active">
           <div class="form-wrap">
